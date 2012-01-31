@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+
+# Don't try to run this binary directory. Instead:
+# * `bundle exec backup-github` if doing backup-github development
+# * `backup-github` if installed through rubygems, relying on the rubygem wrapper
+
+require "backup-github/cli"
+
+BackupGithub::Cli::run()
