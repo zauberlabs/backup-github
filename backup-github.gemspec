@@ -9,9 +9,10 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Mariano A. Cortesi"]
-  s.date = "2012-01-30"
+  s.date = "2012-01-31"
   s.description = "Command to backup Github Issues as JSON files in a Git Repository"
   s.email = "mariano@zauberlabs.com"
+  s.executables = ["gh-backup-issues"]
   s.extra_rdoc_files = [
     "LICENSE.txt",
     "README.rdoc"
@@ -20,11 +21,15 @@ Gem::Specification.new do |s|
     ".document",
     ".rspec",
     "Gemfile",
+    "Gemfile.lock",
     "LICENSE.txt",
     "README.rdoc",
     "Rakefile",
     "VERSION",
+    "backup-github.gemspec",
+    "bin/gh-backup-issues",
     "lib/backup-github.rb",
+    "lib/backup-github/cli.rb",
     "spec/backup-github_spec.rb",
     "spec/spec_helper.rb"
   ]
