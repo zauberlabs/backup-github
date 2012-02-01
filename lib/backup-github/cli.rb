@@ -6,14 +6,15 @@ module BackupGithub
 
     def self.parse_options
       opts = Trollop::options do
+        banner "hola mundo"
         opt :localrepo, "Path to the local repository where backups are saved", 
           :short => "-r",
           :type => String,
           :required => true
-        opt :organization, "Organization as known by Github", 
+        opt :organization, "Organization name if you want to backup repositories from one", 
           :short => "-o",
           :type => String,
-          :required => true
+          :required => false
         opt :github_user, "Github User", 
           :short => "-u",
           :type => String,
@@ -29,12 +30,12 @@ module BackupGithub
 
     def self.run
       opts = parse_options
-
-      walker = GithubIssuesWalker.new(
+      account = opts[:organization] || opts[:github_user]
+      github = GithubAPIAdapter.new(
                 Octokit::Client.new(
                   :login => opts[:github_user], 
                   :password => opts[:github_password]))
-      GithubBackup.new(walker).run(opts[:organization], opts[:localrepo])
+      GithubBackup.new(github).run(account, opts[:localrepo])
     end
 
   end

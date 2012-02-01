@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    backup-github (0.0.0)
+    backup-github (1.0.0)
       grit (~> 2.4.1)
       json (~> 1.6.4)
       octokit (~> 0.6.5)
