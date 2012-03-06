@@ -7,8 +7,11 @@ require 'ostruct'
 require 'pathname'
 require 'logger'
 
+#Grit.debug=true
+
+Issue = Struct.new "Issue", :number, :content
 $logger = Logger.new($stdout)
-  
+
 class GithubBackup
 
   def initialize(github)
@@ -19,58 +22,71 @@ class GithubBackup
     JSON.pretty_generate( issue.content )
   end
 
-  def save_issue(dir, issue)
-    file = dir + ('%04d.js' % issue.number)
-    file.open('w') { |f| f.write(serialize_issue(issue)) }
-    @gitrepo.add(file.to_s)
+  def save_issue(issue)
+    File.open('%04d.js' % issue.number, "w") { |f| f.write(serialize_issue(issue)) }
+  end
+
+  def backup_gitrepo( giturl, path )
+      $logger.info "Backuping #{path.to_path}"
+      if path.directory?
+        $logger.info "Backuping #{path.to_path} -> UPDATE"
+        gritty = Grit::Git.new(path.realpath.to_path)
+        gritty.fetch({:timeout=>false})
+      else
+        $logger.info "Backuping #{path.to_path} -> NEW"
+        path.mkpath
+        gritty = Grit::Git.new(".")
+        gritty.clone({:mirror=>true, :timeout=>false}, giturl, path.realpath.to_path)
+      end
   end
 
   def run( orgname, local_repo )
-    Dir.chdir(local_repo) do |path|
-      @gitrepo = begin
-        Grit::Repo.new(".")
-      rescue Grit::InvalidGitRepositoryError => e
-        $logger.warn "Not a git Repository, creating a new one"
-        Grit::Repo.init(".")
-      end
+    @github.repositories(orgname)[0,3].each do |repo|
+      reponame = "#{orgname}/#{repo.name}"
+      $logger.info "Backuping #{reponame}"
 
-      orgdir = Pathname.new orgname
-      
-      repositories = @github.repositories orgname 
+      repopath = Pathname.new(local_repo) + repo.name
+      repopath.mkpath
 
-      repositories.each do |repo|      
-        reponame = "#{orgname}/#{repo.name}"
-        $logger.info "Backuping #{reponame}"
-        
-        if @github.has_issues? reponame
-          projectdir = orgdir + repo.name
-          projectdir.mkpath
+      $logger.info("Backup Reporsitory")
+      backup_gitrepo(repo.ssh_url, repopath + "git-bare" )
 
-          @github.on_issues(reponame) {|issue| save_issue(projectdir, issue)}
-        else
-          $logger.info "No issues for #{reponame}"
+      $logger.info("Backup Wiki")
+      backup_gitrepo(repo.ssh_url.gsub(".git", ".wiki.git"), repopath + "wiki-bare" )
+
+      # Backup Issues
+      if @github.has_issues? reponame
+        issuespath = repopath + "issues"
+        issuespath.mkpath
+        Dir.chdir(issuespath) do
+          # After endless problems with Grit, fallback to sytem exec
+          `git init` unless File.directory? ".git"
+          $logger.info("Fetching issues")
+          @github.on_issues(reponame) {|issue| save_issue(issue)}
+
+          $logger.info("Add & Commit issues")
+          `git add .`
+          `git commit -m backup`
         end
+      else
+        $logger.info "No issues for #{reponame}"
       end
-
-      @gitrepo.commit_index("Backup...")
-      $logger.info 'Backup Finished'
     end
   end
-
 end
 
 
 class GithubAPIAdapter
   @@ISSUE_STATES = %w{open closed}
-  
-  def initialize(client) 
+
+  def initialize(client)
     @client = client
   end
 
   def has_issues?(reponame)
     @client.repository(reponame).has_issues
   end
-     
+
   def on_issues(reponame, &block)
     @@ISSUE_STATES.each do |status|
       page = 0
@@ -78,8 +94,7 @@ class GithubAPIAdapter
       begin
           issues = @client.list_issues( reponame, :page => page, :state => status )
           issues.each do |issue|
-            yield OpenStruct.new(:number => issue.number, 
-                                 :content => @client.issue(reponame, issue.number))
+            yield Issue.new(issue.number, @client.issue(reponame, issue.number))
           end
           page += 1
       end until issues.length != 10

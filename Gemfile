@@ -5,8 +5,8 @@ group :development do
   gem "rdoc", "~> 3.12"
   gem "bundler", "~> 1.0.0"
   gem "jeweler", "~> 1.8.3"
-  gem "mocha", "~> 0.10.3"  
-  # gem "pry" # active for debug
+  gem "mocha", "~> 0.10.3"
+  #gem "pry" # active for debug
 end
 
 group :default do
