@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
   s.date = "2012-03-06"
   s.description = "Command to backup Github Issues as JSON files in a Git Repository"
   s.email = "mariano@zauberlabs.com"
-  s.executables = ["gh-backup-issues"]
+  s.executables = ["backup-github"]
   s.extra_rdoc_files = [
     "LICENSE.txt",
     "README.md"
@@ -28,12 +28,13 @@ Gem::Specification.new do |s|
     "Rakefile",
     "VERSION",
     "backup-github.gemspec",
-    "bin/gh-backup-issues",
+    "bin/backup-github",
     "lib/backup-github.rb",
     "lib/backup-github/cli.rb",
     "spec/backup-github_spec.rb",
     "spec/spec_helper.rb"
   ]
+  s.bindir = "bin"
   s.homepage = "http://github.com/zauberlabs/backup-github"
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
